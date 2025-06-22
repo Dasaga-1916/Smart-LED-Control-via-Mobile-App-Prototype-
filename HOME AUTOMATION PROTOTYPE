@@ -1,0 +1,40 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+const char* ssid = "YourWiFi";
+const char* password = "YourPass";
+const char* mqtt_server = "broker.hivemq.com";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  String command = "";
+  for (int i = 0; i < length; i++) command += (char)payload[i];
+  
+  if (String(topic) == "home/light1") digitalWrite(2, command == "ON" ? HIGH : LOW);
+  if (String(topic) == "home/fan1") digitalWrite(4, command == "ON" ? HIGH : LOW);
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    if (client.connect("ESP32Client")) {
+      client.subscribe("home/light1");
+      client.subscribe("home/fan1");
+    } else {
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  pinMode(2, OUTPUT); pinMode(4, OUTPUT);
+  WiFi.begin(ssid, password);
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+}
+
+void loop() {
+  if (!client.connected()) reconnect();
+  client.loop();
+}
