@@ -1,0 +1,19 @@
+#define BLYNK_TEMPLATE_ID "YourTemplateID"
+#define BLYNK_TEMPLATE_NAME "Smart LED"
+#define BLYNK_AUTH_TOKEN "YourAuthToken"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+// Replace with your network credentials
+char ssid[] = "Dsg";
+char pass[] = "0123456789";
+
+void setup() {
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  pinMode(D2, OUTPUT); // Set GPIO pin as output
+}
+
+void loop() {
+  Blynk.run(); 
+}
