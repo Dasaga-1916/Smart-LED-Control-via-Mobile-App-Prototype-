@@ -1,0 +1,43 @@
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
+#include "esp_camera.h"
+
+// Replace with your credentials
+const char* ssid = "YourWiFi";
+const char* password = "YourPassword";
+#define PIR_PIN 13
+
+// Telegram Bot credentials
+#define BOT_TOKEN "YOUR_TELEGRAM_BOT_TOKEN"
+#define CHAT_ID "YOUR_CHAT_ID"
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(BOT_TOKEN, client);
+
+void startCamera() {
+  camera_config_t config;
+  // Configuration (depends on your ESP32-CAM board)
+  // Set pins for OV2640 camera
+  // Initialize camera with config
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIR_PIN, INPUT);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+  client.setInsecure();  // for Telegram SSL
+  startCamera();
+}
+
+void loop() {
+  if (digitalRead(PIR_PIN) == HIGH) {
+    camera_fb_t * fb = esp_camera_fb_get();
+    if (!fb) return;
+
+    bot.sendPhotoByBinary(CHAT_ID, "image/jpeg", fb->len, fb->buf, false, "Motion detected!");
+    esp_camera_fb_return(fb);
+    delay(10000);  // avoid spam
+  }
+}
