@@ -1,0 +1,50 @@
+#include <WiFi.h>
+#include <ThingSpeak.h>
+#include <SoftwareSerial.h>
+#include "SDS011.h"
+#include "MHZ19.h"
+
+const char* ssid = "YourWiFi";
+const char* password = "YourPass";
+WiFiClient client;
+
+// ThingSpeak credentials
+unsigned long myChannelNumber = YOUR_CHANNEL_ID;
+const char * myWriteAPIKey = "YOUR_API_KEY";
+
+// SDS011 PM2.5
+SDS011 pmSensor;
+SoftwareSerial pmSerial(16, 17); // RX, TX
+
+// MH-Z19 CO2
+MHZ19 co2Sensor;
+SoftwareSerial co2Serial(18, 19); // RX, TX
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  ThingSpeak.begin(client);
+
+  pmSerial.begin(9600);
+  pmSensor.begin(pmSerial);
+
+  co2Serial.begin(9600);
+  co2Sensor.begin(co2Serial);
+  co2Sensor.autoCalibration();
+}
+
+void loop() {
+  float p25, p10;
+  int co2 = co2Sensor.getCO2();
+
+  if (pmSensor.read(&p25, &p10) == 0) {
+    Serial.printf("PM2.5: %.1f µg/m³, CO2: %d ppm\n", p25, co2);
+
+    ThingSpeak.setField(1, p25);
+    ThingSpeak.setField(2, co2);
+
+    ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+  }
+
+  delay(60000); // 1-minute interval
+}
